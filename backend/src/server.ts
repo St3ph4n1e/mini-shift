@@ -1,27 +1,24 @@
 import express from "express";
+import { prisma } from "./lib/prisma.js";
 
 const app = express();
 
 app.use(express.json());
 
-const employees = [
-  { id: 1, name: "Alice", role: "Manager" },
-  { id: 2, name: "Bob", role: "Waiter" },
-];
-
 app.get("/", (req, res) => {
   res.send("MiniShift API");
 });
 
-app.get("/employees", (req, res) => {
+app.get("/employees", async (req, res) => {
+  const employees = await prisma.employee.findMany();
   res.json(employees);
 });
 
-app.get("/employees/:id", (req, res) => {
+app.get("/employees/:id", async (req, res) => {
   const id = parseInt(req.params.id);
 
-  const employee = employees.find((employee) => {
-    return employee.id === id;
+  const employee = await prisma.employee.findUnique({
+    where: { id },
   });
 
   if (!employee) {
@@ -33,41 +30,44 @@ app.get("/employees/:id", (req, res) => {
   res.json(employee);
 });
 
-app.post("/employees", (req, res) => {
+app.post("/employees", async (req, res) => {
   const { name, role } = req.body;
-  const id = employees.length + 1;
 
-  if (!name.trim() || !role.trim()) {
+  if (
+    typeof name !== "string" ||
+    typeof role !== "string" ||
+    !name.trim() ||
+    !role.trim()
+  ) {
     return res.status(400).json({
       message: "Name and role are required",
     });
   }
 
-  const newEmployee = {
-    id: id,
-    name,
-    role,
-  };
+  const employee = await prisma.employee.create({
+    data: {
+      name: name,
+      role: role,
+    },
+  });
 
-  employees.push(newEmployee);
-
-  res.status(201).json(newEmployee);
+  res.status(201).json(employee);
 });
 
-app.delete("/employees/:id", (req, res) => {
+app.delete("/employees/:id", async (req, res) => {
   const id = parseInt(req.params.id);
 
-  const index = employees.findIndex((employee) => employee.id === id);
+  try {
+    await prisma.employee.delete({
+      where: { id },
+    });
 
-  if (index === -1) {
+    res.status(204).send();
+  } catch (error) {
     return res.status(404).json({
       message: "Employee not found",
     });
   }
-
-  employees.splice(index, 1);
-
-  res.status(204).send();
 });
 
 app.listen(3000, () => {
