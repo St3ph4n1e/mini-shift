@@ -15,5 +15,27 @@ datasource db {
 model Employee {
   id   Int    @id @default(autoincrement())
   name String
-  role String
+  positions Position[]
+
+  shifts Shift[]
+}
+
+model Position {
+  id Int @id @default(autoincrement())
+  name String @unique
+  employees Employee[]
+  shifts Shift[]
+}
+
+model Shift {
+  id Int @id @default(autoincrement())
+  startAt DateTime
+  endAt DateTime
+  location String
+  positionId Int
+  position   Position  @relation(fields: [positionId], references: [id])
+
+  employeeId Int?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
 }
