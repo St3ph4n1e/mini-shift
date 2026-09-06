@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: minishift-postgres
+
+    environment:
+      POSTGRES_USER: minishift
+      POSTGRES_PASSWORD: minishift
+      POSTGRES_DB: minishift
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
