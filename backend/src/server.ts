@@ -1,6 +1,7 @@
 import express from "express";
 import { employeeRouter } from "./employees/employee.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
+import { shiftRouter } from "./shifts/shift.routes.js";
 
 const app = express();
 
@@ -11,6 +12,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/employees", employeeRouter);
+
+app.use("/shifts", shiftRouter);
 
 app.use(errorHandler);
 

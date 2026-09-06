@@ -1,5 +1,6 @@
 import { type NextFunction, type Request, type Response } from "express";
 
+import { AppError } from "../errors/app-error.js";
 import { Prisma } from "../generated/prisma/client.js";
 
 export function errorHandler(
@@ -8,6 +9,12 @@ export function errorHandler(
   res: Response,
   next: NextFunction,
 ) {
+  if (error instanceof AppError) {
+    return res.status(error.statusCode).json({
+      message: error.message,
+    });
+  }
+
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2025"

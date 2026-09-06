@@ -31,7 +31,7 @@ model Shift {
   id Int @id @default(autoincrement())
   startAt DateTime
   endAt DateTime
-  location String
+  location String?
   positionId Int
   position   Position  @relation(fields: [positionId], references: [id])
 
