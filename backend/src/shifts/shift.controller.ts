@@ -1,5 +1,12 @@
 import { type Request, type Response } from "express";
-import { createShift, getAllShifts, getShiftById } from "./shift.service.js";
+import {
+  createShift,
+  deleteShift,
+  getAllShifts,
+  getShiftById,
+  updateShift,
+  type UpdateShiftData,
+} from "./shift.service.js";
 
 export async function createShiftController(req: Request, res: Response) {
   const { startAt, endAt, location, positionId, employeeId } = req.body;
@@ -62,6 +69,96 @@ export async function getShiftController(
       message: "Shift not found",
     });
   }
+
+  res.status(200).json(shift);
+}
+
+export async function deleteShiftController(
+  req: Request<{ id: string }>,
+  res: Response,
+) {
+  const id = parseInt(req.params.id);
+
+  await deleteShift(id);
+
+  res.status(204).send();
+}
+
+export async function updateShiftController(
+  req: Request<{ id: string }>,
+  res: Response,
+) {
+  const id = parseInt(req.params.id);
+
+  const { startAt, endAt, location, positionId, employeeId } = req.body;
+
+  if (
+    startAt === undefined &&
+    endAt === undefined &&
+    location === undefined &&
+    positionId === undefined &&
+    employeeId === undefined
+  ) {
+    return res.status(400).json({
+      message: "At least one field is required",
+    });
+  }
+
+  if (
+    (startAt !== undefined && typeof startAt !== "string") ||
+    (endAt !== undefined && typeof endAt !== "string") ||
+    (location !== undefined &&
+      location !== null &&
+      (typeof location !== "string" || location.trim() === "")) ||
+    (positionId !== undefined && typeof positionId !== "number") ||
+    (employeeId !== undefined &&
+      employeeId !== null &&
+      typeof employeeId !== "number")
+  ) {
+    return res.status(400).json({
+      message: "Invalid shift data",
+    });
+  }
+
+  const updateData: UpdateShiftData = {};
+
+  if (location !== undefined) {
+    updateData.location = location;
+  }
+
+  if (positionId !== undefined) {
+    updateData.positionId = positionId;
+  }
+
+  if (employeeId !== undefined) {
+    updateData.employeeId = employeeId;
+  }
+
+  if (startAt !== undefined) {
+    const startDate = new Date(startAt);
+
+    if (Number.isNaN(startDate.getTime())) {
+      return res.status(400).json({
+        message: "Invalid start date",
+      });
+    }
+
+    updateData.startAt = startDate;
+  }
+
+  if (endAt !== undefined) {
+    const endDate = new Date(endAt);
+
+    if (Number.isNaN(endDate.getTime())) {
+      return res.status(400).json({
+        message: "Invalid end date",
+      });
+    }
+
+    updateData.endAt = endDate;
+  }
+
+  const shift = await updateShift(id, updateData);
 
   res.status(200).json(shift);
 }
