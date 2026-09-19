@@ -18,6 +18,7 @@ model Employee {
   positions Position[]
 
   shifts Shift[]
+  user User?
 }
 
 model Position {
@@ -38,4 +39,20 @@ model Shift {
   employeeId Int?
   employee   Employee? @relation(fields: [employeeId], references: [id])
 
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  email String @unique
+  passwordHash String
+  role UserRole
+
+  employeeId Int? @unique
+  employee Employee? @relation(fields: [employeeId], references: [id])
 }
