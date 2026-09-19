@@ -8,7 +8,7 @@ import {
   updateEmployee,
 } from "./employee.service.js";
 
-export async function getEmployees(req: Request, res: Response) {
+export async function getEmployees(_req: Request, res: Response) {
   const employees = await getAllEmployees();
 
   res.json(employees);
@@ -29,20 +29,23 @@ export async function getEmployee(req: Request<{ id: string }>, res: Response) {
 }
 
 export async function createEmployeeController(req: Request, res: Response) {
-  const { name, role } = req.body;
+  const { name, positionIds } = req.body;
 
   if (
     typeof name !== "string" ||
-    typeof role !== "string" ||
-    !name.trim() ||
-    !role.trim()
+    name.trim() === "" ||
+    !Array.isArray(positionIds) ||
+    positionIds.length === 0 ||
+    !positionIds.every(
+      (id) => typeof id === "number" && Number.isInteger(id) && id > 0,
+    )
   ) {
     return res.status(400).json({
-      message: "Name and role are required",
+      message: "Name and at least one valid position are required",
     });
   }
 
-  const employee = await createEmployee(name, role);
+  const employee = await createEmployee(name.trim(), positionIds);
 
   res.status(201).json(employee);
 }
@@ -63,26 +66,23 @@ export async function updateEmployeeController(
   res: Response,
 ) {
   const id = parseInt(req.params.id);
-  const data = req.body;
+  const { name } = req.body;
 
-  if (data.name === undefined && data.role === undefined) {
+  if (name === undefined) {
     return res.status(400).json({
       message: "At least one field is required",
     });
   }
 
-  if (
-    (data.name !== undefined &&
-      (typeof data.name !== "string" || data.name.trim() === "")) ||
-    (data.role !== undefined &&
-      (typeof data.role !== "string" || data.role.trim() === ""))
-  ) {
+  if (typeof name !== "string" || name.trim() === "") {
     return res.status(400).json({
-      message: "Invalid name or role",
+      message: "Invalid name",
     });
   }
 
-  const employee = await updateEmployee(id, data);
+  const employee = await updateEmployee(id, {
+    name: name.trim(),
+  });
 
   res.status(200).json(employee);
 }
@@ -94,9 +94,13 @@ export async function addPositionToEmployeeController(
   const id = parseInt(req.params.id);
   const positionId = req.body?.positionId;
 
-  if (typeof positionId !== "number") {
+  if (
+    typeof positionId !== "number" ||
+    !Number.isInteger(positionId) ||
+    positionId <= 0
+  ) {
     return res.status(400).json({
-      message: "positionId must be a number",
+      message: "positionId must be a positive integer",
     });
   }
 
